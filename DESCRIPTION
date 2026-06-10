@@ -33,5 +33,8 @@ Imports:
 Suggests:
     allofus,
     knitr,
+    readxl,
+    rmarkdown,
     testthat (>= 3.0.0)
+VignetteBuilder: knitr
 Config/testthat/edition: 3

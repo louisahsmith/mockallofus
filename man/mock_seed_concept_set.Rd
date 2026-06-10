@@ -45,3 +45,7 @@ of participants. Use this so that \code{\link[allofus:aou_concept_set]{allofus::
 your study's concepts return non-empty, develop-able results. Call with the
 same \code{concepts}/\code{domain} you pass to \code{aou_concept_set()}.
 }
+\details{
+For finer control (specific participants, specific dates), use the lower-level
+\code{\link[=mock_add_occurrences]{mock_add_occurrences()}} / \code{\link[=mock_add_concepts]{mock_add_concepts()}} directly.
+}
