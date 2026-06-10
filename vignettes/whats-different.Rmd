@@ -28,8 +28,12 @@ data (using real data here would violate the data use agreement), so:
   specific `concept_id` or survey question returns nothing until you
   [seed](mockallofus.html) it. This is a feature: you control exactly which
   concepts exist and at what prevalence.
-- The `concept` table is a small mock vocabulary, not the full OMOP vocabulary;
-  concept names and relationships are placeholders unless you set them.
+- The `concept` table is a small mock vocabulary, not the full OMOP vocabulary,
+  and `concept_ancestor` / `concept_relationship` are empty by default. If you
+  need the real vocabulary --- for example, to develop descendant/ancestor
+  queries locally instead of on the Workbench --- download the vocabulary files
+  from [Athena](https://athena.ohdsi.org) and load them with
+  [`mock_load_vocabulary()`].
 
 ## Works unchanged
 
@@ -56,13 +60,18 @@ populated.
 `mock_aou_connect()` attaches translations and macros so common BigQuery idioms
 in All of Us code run on DuckDB without changes:
 
+**Case does not matter.** Like SQL, these function names are case-insensitive:
+write `DATE_DIFF()` or `date_diff()`, `DATE_ADD()` or `date_add()`, and so on.
+dbplyr passes the name straight through to SQL, where case is irrelevant, so
+whichever case appears in your code (or in the examples below) works.
+
 | BigQuery idiom | Handled by |
 |---|---|
 | `date_diff(a, b, sql("day"))` (3-arg) | dbplyr translation -> DuckDB `date_diff('day', b, a)` |
-| `DATE_ADD(d, sql("INTERVAL -1 year"))` | dbplyr translation -> DuckDB interval arithmetic |
+| `date_add(d, sql("INTERVAL -1 year"))` | dbplyr translation -> DuckDB interval arithmetic |
 | `as.Date()` of float-y strings (`"1994-5.0-28.0"`) | dbplyr translation (tolerant cast) |
-| `STRING_AGG()`, `CAST(x AS STRING/INT64)`, `IFNULL()`, `REGEXP_EXTRACT()` | Native in DuckDB |
-| `CONTAINS_SUBSTR()`, `REGEXP_CONTAINS()`, `COUNTIF()` | DuckDB macros ([`register_bq_macros()`]) |
+| `string_agg()`, `cast(x AS string/int64)`, `ifnull()`, `regexp_extract()` | Native in DuckDB |
+| `contains_substr()`, `regexp_contains()`, `countif()` | DuckDB macros ([`register_bq_macros()`]) |
 | `collect(page_size = ...)` | `page_size` (a bigrquery argument) is ignored locally |
 
 ## Not available locally

@@ -12,7 +12,7 @@ Description: Builds a local DuckDB database with fully synthetic data that
     against the mock database locally and against the real data on the
     Workbench, with a small set of clearly-documented exceptions.
 License: MIT + file LICENSE
-URL: https://louisahsmith.github.io/mockallofus, https://github.com/louisahsmith/mockallofus, https://louisahsmith.github.io/mock-allofus/
+URL: https://louisahsmith.github.io/mockallofus, https://github.com/louisahsmith/mockallofus
 BugReports: https://github.com/louisahsmith/mockallofus/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

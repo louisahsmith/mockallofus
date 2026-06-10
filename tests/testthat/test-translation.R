@@ -33,6 +33,22 @@ test_that("DATE_ADD with a (negative) INTERVAL literal works and returns a Date"
   expect_equal(res$back1y, as.Date("2019-06-01"))
 })
 
+test_that("BigQuery idiom translations are case-insensitive", {
+  con <- local_mock_con()
+  res <- dplyr::tbl(con, "person") |>
+    dplyr::mutate(
+      lo_diff = date_diff(as.Date("2020-01-01"), as.Date("1990-01-01"), dplyr::sql("day")),
+      up_diff = DATE_DIFF(as.Date("2020-01-01"), as.Date("1990-01-01"), dplyr::sql("day")),
+      lo_add = date_add(as.Date("2020-01-01"), dplyr::sql("INTERVAL 1 year")),
+      up_add = DATE_ADD(as.Date("2020-01-01"), dplyr::sql("INTERVAL 1 year"))
+    ) |>
+    head(1) |>
+    dplyr::collect()
+  expect_equal(as.numeric(res$lo_diff), as.numeric(res$up_diff))
+  expect_equal(res$lo_add, res$up_add)
+  expect_equal(res$lo_add, as.Date("2021-01-01"))
+})
+
 test_that("as.Date tolerates float-valued concatenated components", {
   con <- local_mock_con()
   # mirrors the All of Us date-of-birth construction, where if_else(is.na(x), 1, x)

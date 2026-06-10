@@ -1,4 +1,4 @@
-url: https://louisahsmith.github.io/mock-allofus/
+url: https://louisahsmith.github.io/mockallofus
 template:
   bootstrap: 5
 
@@ -28,6 +28,10 @@ reference:
   contents:
   - build_mock_db
   - default_mock_db_path
+- title: OMOP vocabulary
+  desc: Optionally load the full OMOP vocabulary for concept-relationship work.
+  contents:
+  - mock_load_vocabulary
 - title: Seeding your study's data
   desc: >
     Put the concepts and survey questions your analysis looks for into the
