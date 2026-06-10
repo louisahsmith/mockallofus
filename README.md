@@ -20,16 +20,21 @@ same `allofus` analysis code locally that you would run on the Workbench.
 
 ## Installation
 
+`mockallofus` currently requires the development version of `allofus` from the
+[`mock-duckdb-support`](https://github.com/roux-ohdsi/allofus/tree/mock-duckdb-support)
+branch, which adds the backend-aware query execution that lets `allofus`
+functions run against DuckDB rather than only BigQuery. (Once that work is
+merged and released, the released `allofus` will work.)
+
 ```r
 # install.packages("pak")
-pak::pak("duckdb")              # the local database engine
-pak::pak("roux-ohdsi/allofus")  # the package whose code you're developing
-# then install mockallofus (e.g. from local source or GitHub)
+pak::pak("roux-ohdsi/allofus@mock-duckdb-support")  # required allofus branch
+pak::pak("louisahsmith/mockallofus")                # installs duckdb too
 ```
 
-`mockallofus` requires a version of `allofus` with backend-aware query
-execution (so `allofus` functions can run against DuckDB rather than only
-BigQuery).
+`mockallofus` declares this requirement in its `Remotes:` field, so installing
+it (or its dependencies, e.g. in CI) pulls the correct `allofus` branch
+automatically.
 
 ## Usage
 

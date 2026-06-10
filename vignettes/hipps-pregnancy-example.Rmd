@@ -93,7 +93,7 @@ Only three things differ from running on the Workbench, all marked below:
 
 ```{r setup-full, eval = FALSE}
 library(tidyverse)
-library(allofus)     # needs a version with backend-aware query execution
+library(allofus)     # the mock-duckdb-support branch (see installation)
 library(mockallofus)
 
 # the project's algorithm code and code lists, read straight from GitHub
