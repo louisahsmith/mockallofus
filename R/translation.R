@@ -39,6 +39,39 @@ bq_as_date <- function(x) {
   )
 }
 
+# BigQuery DATE_ADD(date, INTERVAL n unit) (as written in All of Us code, e.g.
+#   DATE_ADD(first_survey, sql(paste("INTERVAL", -1, "year")))
+# ). DuckDB rejects a bare negative interval literal ("INTERVAL -1 year"), so
+# rewrite to `CAST(date + to_<unit>s(n) AS DATE)`, which handles negatives and
+# returns a DATE (matching BigQuery's DATE_ADD return type).
+bq_date_add <- function(x, interval) {
+  s <- as.character(interval)
+  m <- regmatches(s, regexec("INTERVAL\\s+\\(?(-?[0-9]+)\\)?\\s+([A-Za-z]+)", s, perl = TRUE))[[1]]
+  unit_fn <- if (length(m) == 3) {
+    switch(tolower(m[3]),
+      year = , years = "to_years",
+      month = , months = "to_months",
+      week = , weeks = "to_weeks",
+      day = , days = "to_days",
+      hour = , hours = "to_hours",
+      minute = , minutes = "to_minutes",
+      second = , seconds = "to_seconds",
+      NA_character_
+    )
+  } else {
+    NA_character_
+  }
+  if (!is.na(unit_fn)) {
+    return(dbplyr::build_sql(
+      dbplyr::sql("CAST("), x, dbplyr::sql(paste0(" + ", unit_fn, "(", m[2], ")")),
+      dbplyr::sql(" AS DATE)")
+    ))
+  }
+  # fallback: just parenthesize the number so DuckDB can parse the literal
+  s2 <- gsub("(INTERVAL\\s+)(-?[0-9]+)", "\\1(\\2)", s, perl = TRUE)
+  dbplyr::build_sql(dbplyr::sql("DATE_ADD("), x, dbplyr::sql(paste0(", ", s2, ")")))
+}
+
 #' Collect method that tolerates BigQuery-only download arguments
 #'
 #' All of Us code often calls `collect(page_size = ...)`, where `page_size` is a
@@ -74,6 +107,8 @@ sql_translation.mock_aou_connection <- function(con) {
       .parent = base$scalar,
       date_diff = bq_date_diff,
       DATE_DIFF = bq_date_diff,
+      date_add = bq_date_add,
+      DATE_ADD = bq_date_add,
       as.Date = bq_as_date
     ),
     aggregate = base$aggregate,

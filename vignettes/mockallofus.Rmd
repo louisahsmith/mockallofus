@@ -1,0 +1,195 @@
+---
+title: "Getting started with mockallofus"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with mockallofus}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE,
+  # the analysis chunks need the (backend-aware) allofus package and duckdb
+  eval = requireNamespace("allofus", quietly = TRUE) &&
+    requireNamespace("duckdb", quietly = TRUE)
+)
+```
+
+This vignette assumes you already know the [All of Us](https://www.researchallofus.org/)
+data and the [`allofus`](https://roux-ohdsi.github.io/allofus/) package --- if
+not, read the `allofus` "getting started" and data-extraction vignettes first.
+Here we cover the one new thing you need for `mockallofus`: **putting your
+study's data into a local database so your `allofus` code returns results.**
+
+The mock database is synthetic and random; it does **not** reflect real All of
+Us data, and results are not meaningful. The point is to develop and debug code
+locally, without the (metered) Researcher Workbench.
+
+## Connect
+
+The only change from a Workbench script is the connection call. `mock_aou_connect()`
+builds a local DuckDB database (on first use) and stores it in
+`getOption("aou.default.con")` --- exactly where `allofus` looks --- so every
+`allofus` function works against it unchanged.
+
+```{r connect}
+library(mockallofus)
+library(allofus)
+suppressMessages(library(dplyr))
+
+con <- mock_aou_connect()
+```
+
+The database already has synthetic participants and a broad spread of generic
+clinical events and survey responses, so ordinary `dplyr`/`dbplyr` works right
+away:
+
+```{r explore}
+tbl(con, "person") |> tally()
+
+tbl(con, "measurement") |>
+  summarise(n = n(), n_people = n_distinct(person_id))
+```
+
+What it does **not** have is *your study's specific concepts*. A query for a
+particular `concept_id` or survey question will simply come back empty --- which
+is where seeding comes in.
+
+## Seed your study's data
+
+We'll reproduce the eligibility logic from the `allofus` paper's case study,
+which builds a cohort from electronic health record (EHR) concept sets and
+survey responses. First, seed the concepts that analysis looks for.
+
+`mock_seed_concept_set()` is the workhorse: give it the same concept ids and
+domain you would pass to `allofus::aou_concept_set()`, plus a `prevalence` (the
+fraction of participants who should have the concept). Keeping prevalence below
+1 is what makes eligibility joins return a *partial* cohort --- some people
+qualify, some don't --- which is what you want when developing filtering logic.
+
+```{r seed-concepts}
+# devices, a condition/drug set, and a lab test (with values in a chosen range)
+mock_seed_concept_set(con, c(2616672, 3034639), domain = "device",
+                      prevalence = 0.15, seed = 1)
+mock_seed_concept_set(con, c(201826, 4193704), domain = "condition",
+                      prevalence = 0.20, seed = 2)
+mock_seed_concept_set(con, c(40164929, 40164897), domain = "drug",
+                      prevalence = 0.20, seed = 3)
+mock_seed_concept_set(con, c(3004410, 3005673), domain = "measurement",
+                      prevalence = 0.30, values = c(4, 11), seed = 4)
+```
+
+Survey questions are seeded with `mock_seed_survey()`, using the same question
+concept ids you pass to `allofus::aou_survey()`. (These must be real codebook
+concept ids --- `aou_survey()` validates them against `allofus::aou_codebook` ---
+so here we use education and income.)
+
+```{r seed-survey}
+mock_seed_survey(con, c(1585940, 1585375), prevalence = 0.8, seed = 5)
+```
+
+## Run your analysis, unchanged
+
+From here the code is ordinary `allofus`. Build an eligibility cohort: everyone
+whose full year before their first survey falls within their observation period.
+
+```{r eligible}
+observation_period_tbl <- aou_observation_period()
+
+survey_date_tbl <- tbl(con, "ds_survey") |>
+  summarize(first_survey = as.Date(min(survey_datetime)), .by = "person_id") |>
+  mutate(year_before_survey = DATE_ADD(first_survey, sql(paste("INTERVAL", -1, "year"))))
+
+eligible <- survey_date_tbl |>
+  aou_join(observation_period_tbl, type = "inner",
+           by = join_by(person_id,
+                        within(year_before_survey, first_survey,
+                               observation_period_start_date,
+                               observation_period_end_date)))
+
+tally(eligible)
+```
+
+Pull EHR concept sets over the year before the survey and exclude participants
+who have a device or repeated high lab values:
+
+```{r concept-sets}
+device <- aou_concept_set(eligible, c(2616672, 3034639),
+                          start_date = "year_before_survey", end_date = "first_survey",
+                          output = "indicator", concept_set_name = "device",
+                          domains = "device") |>
+  filter(device == 1) |>
+  distinct(person_id)
+
+lab_test <- aou_concept_set(eligible, c(3004410, 3005673),
+                            start_date = "year_before_survey", end_date = "first_survey",
+                            output = "all", concept_set_name = "lab_test",
+                            domains = "measurement") |>
+  filter(value_as_number > 6.5) |>
+  summarise(n = n(), .by = "person_id") |>
+  filter(n >= 2) |>
+  distinct(person_id)
+
+ineligible <- list(device, lab_test) |>
+  purrr::reduce(union_all) |>
+  aou_compute()
+
+eligible <- anti_join(eligible, ineligible, by = "person_id")
+```
+
+Attach survey data and bring the result into memory:
+
+```{r survey}
+survey_data <- aou_survey(eligible, questions = c(1585940, 1585375),
+                          question_output = c("edu", "income"))
+
+cohort <- collect(survey_data)
+nrow(cohort)
+head(cohort)
+```
+
+```{r disconnect, include = FALSE}
+mock_aou_disconnect(con)
+```
+
+That is the whole workflow: connect, seed the concepts/questions your study
+uses, then run your real `allofus` code.
+
+## Finer control over seeded data
+
+`mock_seed_concept_set()` scatters a concept randomly across participants. When
+you need exact control --- specific people, specific dates, temporally
+structured events --- use the lower-level primitives:
+
+- `mock_add_concepts(con, concept_id, concept_name, domain_id)` --- add concept
+  definitions (with real names, so name-based lookups work).
+- `mock_add_occurrences(con, domain, person_id, concept_id, date, value, source)`
+  --- add events to a domain table, generating keys and the matching `_ext`
+  source rows automatically.
+- `mock_person_ids(con)` --- the participant ids to attach data to.
+
+```{r primitives, eval = FALSE}
+ids <- mock_person_ids(con)
+mock_add_concepts(con, 99999001, "My study's condition", domain_id = "Condition")
+mock_add_occurrences(con, "condition", person_id = ids[1:50],
+                     concept_id = 99999001, date = as.Date("2021-03-15"))
+```
+
+For a worked example that builds a temporally coherent cohort with these
+primitives --- the HIPPS pregnancy algorithm run end-to-end on the mock database
+--- see `vignette("hipps-pregnancy-example")`.
+
+## What doesn't work locally
+
+Most `allofus` workflows run unchanged. The clearly-scoped exceptions are
+Workbench/cloud features with no local equivalent:
+
+- `aou_workspace_to_bucket()` / `aou_bucket_to_workspace()` and the
+  `aou_ls_*()` file helpers (Google Cloud Storage) --- save with `readr::write_*`
+  locally instead.
+- `aou_atlas_cohort()` (uses BigQuery-dialect SQL generated by `SqlRender`).
+- Raw `aou_sql()` that uses BigQuery-only functions; portable SQL runs fine.

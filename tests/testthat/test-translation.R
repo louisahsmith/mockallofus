@@ -20,6 +20,19 @@ test_that("date_diff works in a windowed (lag) context", {
   expect_true("gap" %in% names(res))
 })
 
+test_that("DATE_ADD with a (negative) INTERVAL literal works and returns a Date", {
+  con <- local_mock_con()
+  res <- dplyr::tbl(con, "person") |>
+    dplyr::mutate(
+      d0 = as.Date("2020-06-01"),
+      back1y = DATE_ADD(as.Date("2020-06-01"), dplyr::sql(paste("INTERVAL", -1, "year")))
+    ) |>
+    head(1) |>
+    dplyr::collect()
+  expect_s3_class(res$back1y, "Date")
+  expect_equal(res$back1y, as.Date("2019-06-01"))
+})
+
 test_that("as.Date tolerates float-valued concatenated components", {
   con <- local_mock_con()
   # mirrors the All of Us date-of-birth construction, where if_else(is.na(x), 1, x)
