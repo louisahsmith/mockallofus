@@ -12,6 +12,8 @@ Description: Builds a local DuckDB database with fully synthetic data that
     against the mock database locally and against the real data on the
     Workbench, with a small set of clearly-documented exceptions.
 License: MIT + file LICENSE
+URL: https://louisahsmith.github.io/mockallofus, https://github.com/louisahsmith/mockallofus
+BugReports: https://github.com/louisahsmith/mockallofus/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
@@ -38,3 +40,4 @@ Suggests:
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+Config/Needs/website: pkgdown

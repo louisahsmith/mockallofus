@@ -6,3 +6,6 @@
 *.duckdb.wal
 ..Rcheck/
 *.tar.gz
+
+# pkgdown site
+docs/

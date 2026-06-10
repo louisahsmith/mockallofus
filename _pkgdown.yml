@@ -1,0 +1,48 @@
+url: https://louisahsmith.github.io/mockallofus
+
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left: [intro, articles, reference]
+    right: [search, github]
+
+articles:
+- title: Articles
+  navbar: ~
+  contents:
+  - reproducible-workflows
+  - hipps-pregnancy-example
+  - whats-different
+
+reference:
+- title: Connecting
+  desc: >
+    Connect to the local mock database. Stores the connection where allofus
+    looks for it, so allofus functions work against it unchanged.
+  contents:
+  - mock_aou_connect
+  - mock_aou_disconnect
+- title: Building the mock database
+  desc: Create or locate the local DuckDB database.
+  contents:
+  - build_mock_db
+  - default_mock_db_path
+- title: Seeding your study's data
+  desc: >
+    Put the concepts and survey questions your analysis looks for into the
+    database, at a controllable prevalence, so queries return develop-able data.
+  contents:
+  - mock_seed_concept_set
+  - mock_seed_survey
+- title: Seeding building blocks
+  desc: Lower-level primitives for inserting custom synthetic data.
+  contents:
+  - mock_add_concepts
+  - mock_add_occurrences
+  - mock_person_ids
+- title: BigQuery compatibility
+  desc: Register BigQuery-compatible SQL on a connection (used internally).
+  contents:
+  - register_bq_macros
