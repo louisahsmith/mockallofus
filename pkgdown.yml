@@ -1,0 +1,12 @@
+pandoc: 3.8.3
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  hipps-pregnancy-example: hipps-pregnancy-example.html
+  mockallofus: mockallofus.html
+  reproducible-workflows: reproducible-workflows.html
+  whats-different: whats-different.html
+last_built: 2026-06-10T19:09Z
+urls:
+  reference: https://louisahsmith.github.io/mockallofus/reference
+  article: https://louisahsmith.github.io/mockallofus/articles
