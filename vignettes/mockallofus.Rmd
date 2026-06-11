@@ -41,7 +41,10 @@ library(mockallofus)
 library(allofus)
 suppressMessages(library(dplyr))
 
-con <- mock_aou_connect()
+# In your own work just call mock_aou_connect(), which builds and reuses a
+# cached database. This vignette writes to a throwaway file so building it never
+# collides with a database you have open elsewhere.
+con <- mock_aou_connect(path = tempfile(fileext = ".duckdb"))
 ```
 
 The database already has synthetic participants and a broad spread of generic

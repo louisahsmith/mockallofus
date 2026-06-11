@@ -10,6 +10,7 @@ mock_add_occurrences(
   person_id,
   concept_id,
   date,
+  end_date = NULL,
   value = NULL,
   source = c("ehr", "ppi")
 )
@@ -25,7 +26,13 @@ mock_add_occurrences(
 \item{concept_id}{Integer concept id(s); recycled to \code{length(person_id)}.}
 
 \item{date}{Event date(s) (Date or coercible); recycled to \code{length(person_id)}.
-Used for the domain's start date (and end date, where the table has one).}
+Used for the domain's start date (and, unless \code{end_date} is given, its end
+date too).}
+
+\item{end_date}{Optional end date(s) for domains that have an end column
+(e.g. \code{drug_exposure}, \code{condition_occurrence}, \code{visit_occurrence}). Recycled
+to \code{length(person_id)}. Defaults to \code{date} (a single-day event). Use this to
+give exposures a realistic duration.}
 
 \item{value}{Optional numeric value(s) written to \code{value_as_number} where the
 table has that column (e.g. measurements, observations).}

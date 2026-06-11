@@ -44,6 +44,19 @@ test_that("mock_add_occurrences writes value_as_number for measurements", {
   expect_equal(as.numeric(vals$value_as_number), 6.5)
 })
 
+test_that("mock_add_occurrences records end_date for spanning events", {
+  con <- local_mock_con(n_persons = 50L)
+  people <- mock_person_ids(con)[1:10]
+  mock_add_concepts(con, 755695L, "fluoxetine", domain_id = "Drug")
+  mock_add_occurrences(con, "drug", person_id = people, concept_id = 755695L,
+                       date = as.Date("2021-01-01"), end_date = as.Date("2021-03-31"))
+  res <- DBI::dbGetQuery(con,
+    "SELECT DISTINCT drug_exposure_start_date, drug_exposure_end_date
+     FROM drug_exposure WHERE drug_concept_id = 755695")
+  expect_equal(as.Date(res$drug_exposure_start_date), as.Date("2021-01-01"))
+  expect_equal(as.Date(res$drug_exposure_end_date), as.Date("2021-03-31"))
+})
+
 test_that("mock_add_occurrences errors on an unknown domain", {
   con <- local_mock_con(n_persons = 50L)
   expect_error(

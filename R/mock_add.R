@@ -88,7 +88,12 @@ mock_add_concepts <- function(con, concept_id, concept_name = NULL, domain_id = 
 #' @param person_id Integer vector of participant ids (one per occurrence).
 #' @param concept_id Integer concept id(s); recycled to `length(person_id)`.
 #' @param date Event date(s) (Date or coercible); recycled to `length(person_id)`.
-#'   Used for the domain's start date (and end date, where the table has one).
+#'   Used for the domain's start date (and, unless `end_date` is given, its end
+#'   date too).
+#' @param end_date Optional end date(s) for domains that have an end column
+#'   (e.g. `drug_exposure`, `condition_occurrence`, `visit_occurrence`). Recycled
+#'   to `length(person_id)`. Defaults to `date` (a single-day event). Use this to
+#'   give exposures a realistic duration.
 #' @param value Optional numeric value(s) written to `value_as_number` where the
 #'   table has that column (e.g. measurements, observations).
 #' @param source `"ehr"` tags the `_ext` row as EHR-sourced (`src_id` like
@@ -106,7 +111,8 @@ mock_add_concepts <- function(con, concept_id, concept_name = NULL, domain_id = 
 #'                      date = as.Date("2021-03-15"))
 #' }
 mock_add_occurrences <- function(con, domain, person_id, concept_id, date,
-                                 value = NULL, source = c("ehr", "ppi")) {
+                                 end_date = NULL, value = NULL,
+                                 source = c("ehr", "ppi")) {
   source <- match.arg(source)
   dm <- domain_map()
   if (!domain %in% names(dm)) {
@@ -117,6 +123,7 @@ mock_add_occurrences <- function(con, domain, person_id, concept_id, date,
   if (n == 0) return(invisible(integer(0)))
   concept_id <- rep_len(as.integer(concept_id), n)
   date <- rep_len(as.Date(date), n)
+  end <- if (is.null(end_date)) date else rep_len(as.Date(end_date), n)
   ids <- next_id(con, cn$table, cn$id) + seq_len(n)
 
   spec <- table_spec(cn$table)
@@ -125,7 +132,7 @@ mock_add_occurrences <- function(con, domain, person_id, concept_id, date,
   vals[[cn$id]] <- ids
   vals[[cn$concept]] <- concept_id
   vals[[cn$start]] <- date
-  if (!is.null(cn$end)) vals[[cn$end]] <- date
+  if (!is.null(cn$end)) vals[[cn$end]] <- end
   if (!is.null(value) && "value_as_number" %in% spec$col) {
     vals[["value_as_number"]] <- rep_len(as.numeric(value), n)
   }
