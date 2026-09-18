@@ -99,19 +99,19 @@ generic clinical events and survey responses, so ordinary
 <code>dplyr</code>/<code>dbplyr</code> works right away:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/tbl.html" class="external-link">tbl</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"person"</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">tally</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Source:   SQL [?? x 1]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpGcYgkh/file1c3e564097e7.duckdb]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A query:  ?? x 1</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.5 [unknown@Linux 6.17.0-1022-azure:R 4.6.1//tmp/RtmpdZzKcb/file1c6b79e099ef.duckdb]</span></span></span>
 <span><span class="co">#&gt;         n</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int64&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    <span style="text-decoration: underline;">2</span>000</span></span>
 <span></span>
 <span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/tbl.html" class="external-link">tbl</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"measurement"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>, n_people <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/n_distinct.html" class="external-link">n_distinct</a></span><span class="op">(</span><span class="va">person_id</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Source:   SQL [?? x 2]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpGcYgkh/file1c3e564097e7.duckdb]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A query:  ?? x 2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.5 [unknown@Linux 6.17.0-1022-azure:R 4.6.1//tmp/RtmpdZzKcb/file1c6b79e099ef.duckdb]</span></span></span>
 <span><span class="co">#&gt;         n n_people</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int64&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int64&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   <span style="text-decoration: underline;">10</span>002     <span style="text-decoration: underline;">1</span>819</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    <span style="text-decoration: underline;">9</span>937     <span style="text-decoration: underline;">1</span>840</span></span></code></pre></div>
 <p>What it does <strong>not</strong> have is <em>your study’s specific
 concepts</em>. A query for a particular <code>concept_id</code> or
 survey question will simply come back empty — which is where seeding
@@ -173,11 +173,11 @@ falls within their observation period.</p>
 <span>                               <span class="va">observation_period_end_date</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">tally</a></span><span class="op">(</span><span class="va">eligible</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Source:   SQL [?? x 1]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpGcYgkh/file1c3e564097e7.duckdb]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A query:  ?? x 1</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.5 [unknown@Linux 6.17.0-1022-azure:R 4.6.1//tmp/RtmpdZzKcb/file1c6b79e099ef.duckdb]</span></span></span>
 <span><span class="co">#&gt;         n</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int64&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    <span style="text-decoration: underline;">1</span>805</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    <span style="text-decoration: underline;">1</span>799</span></span></code></pre></div>
 <p>Pull EHR concept sets over the year before the survey and exclude
 participants who have a device or repeated high lab values:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -214,17 +214,17 @@ participants who have a device or repeated high lab values:</p>
 <span></span>
 <span><span class="va">cohort</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="va">eligible</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">cohort</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 975</span></span>
+<span><span class="co">#&gt; [1] 979</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">cohort</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 11</span></span></span>
 <span><span class="co">#&gt;   person_id t2dm  income    edu   t2dm_date  income_date edu_date   first_survey</span></span>
 <span><span class="co">#&gt;     <span style="color: #949494; font-style: italic;">&lt;int64&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   1<span style="text-decoration: underline;">000</span>002 No    AnnualIn… High… 2022-09-30 2018-03-31  2022-02-28 2018-12-20  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   1<span style="text-decoration: underline;">000</span>003 No    AnnualIn… High… 2021-03-19 2018-12-12  2019-08-15 2019-10-07  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>   1<span style="text-decoration: underline;">000</span>004 No    AnnualIn… High… 2017-08-20 2019-08-03  2019-05-02 2019-08-09  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>   1<span style="text-decoration: underline;">000</span>005 No    <span style="color: #BB0000;">NA</span>        High… 2020-01-26 <span style="color: #BB0000;">NA</span>          2020-04-15 2020-10-06  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>   1<span style="text-decoration: underline;">000</span>007 No    <span style="color: #BB0000;">NA</span>        PMI_… 2020-02-21 <span style="color: #BB0000;">NA</span>          2020-03-22 2019-10-15  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>   1<span style="text-decoration: underline;">000</span>010 No    <span style="color: #BB0000;">NA</span>        High… 2017-11-21 <span style="color: #BB0000;">NA</span>          2022-05-31 2020-03-04  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   1<span style="text-decoration: underline;">000</span>002 No    AnnualIn… High… 2022-09-30 2018-03-31  2021-12-25 2020-03-28  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   1<span style="text-decoration: underline;">000</span>003 No    AnnualIn… High… 2021-03-19 2018-12-12  2019-10-21 2019-12-19  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>   1<span style="text-decoration: underline;">000</span>004 No    AnnualIn… High… 2017-08-20 2019-08-03  2018-11-07 2017-11-20  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>   1<span style="text-decoration: underline;">000</span>005 No    <span style="color: #BB0000;">NA</span>        High… 2020-01-26 <span style="color: #BB0000;">NA</span>          2020-10-04 2020-10-06  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>   1<span style="text-decoration: underline;">000</span>007 No    <span style="color: #BB0000;">NA</span>        PMI_… 2020-02-21 <span style="color: #BB0000;">NA</span>          2017-05-08 2020-08-18  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>   1<span style="text-decoration: underline;">000</span>010 No    <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>    2017-11-21 <span style="color: #BB0000;">NA</span>          <span style="color: #BB0000;">NA</span>         2017-06-21  </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: year_before_survey &lt;date&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   observation_period_start_date &lt;date&gt;, observation_period_end_date &lt;date&gt;</span></span></span></code></pre></div>
 <p>That is the whole workflow: connect, seed the concepts/questions your
@@ -280,7 +280,7 @@ different from the Researcher Workbench</em></a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

@@ -275,6 +275,54 @@ article).</p>
 <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code> in place of the bucket helpers.</p>
 </div>
 <div class="section level2">
+<h2 id="privacy-transformations-the-mock-reproduces">Privacy transformations the mock reproduces<a class="anchor" aria-label="anchor" href="#privacy-transformations-the-mock-reproduces"></a>
+</h2>
+<p>Some of what makes the controlled tier awkward to work with is not
+OMOP structure but All of Us’s own privacy rules, and code that ignores
+them works locally and fails on the Workbench. The mock applies these
+deliberately:</p>
+<ul>
+<li>
+<strong><code>person$month_of_birth</code>,
+<code>person$day_of_birth</code> and <code>person$birth_datetime</code>
+are <code>NA</code>.</strong> All of Us suppresses all three. Use
+<code>cb_search_person$dob</code>, which is the only usable birth date
+in the controlled tier. It is a <code>DATE</code> here as it is there,
+and — matching the program’s generalization of birth date to year of
+birth — it always falls on 15 June.</li>
+<li>
+<strong><code>location</code>, <code>care_site</code> and
+<code>provider</code> do not exist.</strong> All of Us drops those
+tables entirely.</li>
+</ul>
+<p>If you find a privacy transformation the mock does not reproduce,
+that is a bug worth reporting: a divergence in this direction is the
+kind that only shows up after a Workbench run.</p>
+</div>
+<div class="section level2">
+<h2 id="fidelity-the-mock-does-not-claim">Fidelity the mock does <em>not</em> claim<a class="anchor" aria-label="anchor" href="#fidelity-the-mock-does-not-claim"></a>
+</h2>
+<ul>
+<li>
+<strong><code>*_source_concept_id</code> is populated, but the
+mapping is synthetic.</strong> Real source concepts come from each
+contributing site’s own vocabulary, and several distinct source codes
+commonly map to one standard concept. Here a row’s source concept is
+either its standard concept or <code>0</code> (All of Us’s marker for a
+code that did not map). That is enough to exercise code that groups or
+filters on the source column — which matters, because controlled-tier
+row suppression is keyed on source concepts — but the
+<em>distribution</em> across source codes is not realistic, so
+conclusions about how much data a suppression removes have to come from
+the Workbench.</li>
+<li>
+<strong>Cross-table consistency is partial.</strong> Sex at birth
+agrees between <code>person</code> and <code>cb_search_person</code>,
+and every clinical row has its <code>_ext</code> partner. Most other
+relationships between tables are not modelled.</li>
+</ul>
+</div>
+<div class="section level2">
 <h2 id="other-behavioral-notes">Other behavioral notes<a class="anchor" aria-label="anchor" href="#other-behavioral-notes"></a>
 </h2>
 <ul>
@@ -305,7 +353,7 @@ reproducible.</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

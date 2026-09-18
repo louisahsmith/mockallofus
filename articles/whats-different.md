@@ -91,6 +91,42 @@ For local file output, use `readr::write_*()` /
 [`saveRDS()`](https://rdrr.io/r/base/readRDS.html) in place of the
 bucket helpers.
 
+## Privacy transformations the mock reproduces
+
+Some of what makes the controlled tier awkward to work with is not OMOP
+structure but All of Us’s own privacy rules, and code that ignores them
+works locally and fails on the Workbench. The mock applies these
+deliberately:
+
+- **`person$month_of_birth`, `person$day_of_birth` and
+  `person$birth_datetime` are `NA`.** All of Us suppresses all three.
+  Use `cb_search_person$dob`, which is the only usable birth date in the
+  controlled tier. It is a `DATE` here as it is there, and — matching
+  the program’s generalization of birth date to year of birth — it
+  always falls on 15 June.
+- **`location`, `care_site` and `provider` do not exist.** All of Us
+  drops those tables entirely.
+
+If you find a privacy transformation the mock does not reproduce, that
+is a bug worth reporting: a divergence in this direction is the kind
+that only shows up after a Workbench run.
+
+## Fidelity the mock does *not* claim
+
+- **`*_source_concept_id` is populated, but the mapping is synthetic.**
+  Real source concepts come from each contributing site’s own
+  vocabulary, and several distinct source codes commonly map to one
+  standard concept. Here a row’s source concept is either its standard
+  concept or `0` (All of Us’s marker for a code that did not map). That
+  is enough to exercise code that groups or filters on the source column
+  — which matters, because controlled-tier row suppression is keyed on
+  source concepts — but the *distribution* across source codes is not
+  realistic, so conclusions about how much data a suppression removes
+  have to come from the Workbench.
+- **Cross-table consistency is partial.** Sex at birth agrees between
+  `person` and `cb_search_person`, and every clinical row has its `_ext`
+  partner. Most other relationships between tables are not modelled.
+
 ## Other behavioral notes
 
 - **Connection class.**

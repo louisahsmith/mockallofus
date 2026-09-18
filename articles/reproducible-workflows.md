@@ -51,11 +51,11 @@ con <- mock_aou_connect(db_path, quiet = TRUE) # reopen the same file
 tbl(con, "condition_occurrence") |>
   filter(condition_concept_id %in% c(201826, 4193704)) |>
   summarise(people = n_distinct(person_id))
-#> # Source:   SQL [?? x 1]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpdO180i/file1c8575ed7804.duckdb]
+#> # A query:  ?? x 1
+#> # Database: DuckDB 1.5.5 [unknown@Linux 6.17.0-1022-azure:R 4.6.1//tmp/RtmpU0BPwD/file1cb27bc9f4e7.duckdb]
 #>    people
 #>   <int64>
-#> 1     345
+#> 1     353
 ```
 
 [`build_mock_db()`](https://louisahsmith.github.io/mockallofus/reference/build_mock_db.md)
@@ -133,11 +133,11 @@ mock_seed_concept_set(con, c(3004410, 3005673), domain = "measurement",
                       prevalence = 0.4, values = c(5, 11), seed = 3, quiet = TRUE)
 
 high_a1c_cohort(con = con) |> tally()
-#> # Source:   SQL [?? x 1]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpdO180i/file1c8575ed7804.duckdb]
+#> # A query:  ?? x 1
+#> # Database: DuckDB 1.5.5 [unknown@Linux 6.17.0-1022-azure:R 4.6.1//tmp/RtmpU0BPwD/file1cb27bc9f4e7.duckdb]
 #>         n
 #>   <int64>
-#> 1     359
+#> 1     368
 ```
 
 ## Test analysis code without the Workbench

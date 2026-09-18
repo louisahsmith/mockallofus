@@ -39,19 +39,19 @@ generic clinical events and survey responses, so ordinary
 ``` r
 
 tbl(con, "person") |> tally()
-#> # Source:   SQL [?? x 1]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpGcYgkh/file1c3e564097e7.duckdb]
+#> # A query:  ?? x 1
+#> # Database: DuckDB 1.5.5 [unknown@Linux 6.17.0-1022-azure:R 4.6.1//tmp/RtmpdZzKcb/file1c6b79e099ef.duckdb]
 #>         n
 #>   <int64>
 #> 1    2000
 
 tbl(con, "measurement") |>
   summarise(n = n(), n_people = n_distinct(person_id))
-#> # Source:   SQL [?? x 2]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpGcYgkh/file1c3e564097e7.duckdb]
+#> # A query:  ?? x 2
+#> # Database: DuckDB 1.5.5 [unknown@Linux 6.17.0-1022-azure:R 4.6.1//tmp/RtmpdZzKcb/file1c6b79e099ef.duckdb]
 #>         n n_people
 #>   <int64>  <int64>
-#> 1   10002     1819
+#> 1    9937     1840
 ```
 
 What it does **not** have is *your study’s specific concepts*. A query
@@ -124,11 +124,11 @@ eligible <- survey_date_tbl |>
                                observation_period_end_date)))
 
 tally(eligible)
-#> # Source:   SQL [?? x 1]
-#> # Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpGcYgkh/file1c3e564097e7.duckdb]
+#> # A query:  ?? x 1
+#> # Database: DuckDB 1.5.5 [unknown@Linux 6.17.0-1022-azure:R 4.6.1//tmp/RtmpdZzKcb/file1c6b79e099ef.duckdb]
 #>         n
 #>   <int64>
-#> 1    1805
+#> 1    1799
 ```
 
 Pull EHR concept sets over the year before the survey and exclude
@@ -173,17 +173,17 @@ eligible <- survey_data |>
 
 cohort <- collect(eligible)
 nrow(cohort)
-#> [1] 975
+#> [1] 979
 head(cohort)
 #> # A tibble: 6 × 11
 #>   person_id t2dm  income    edu   t2dm_date  income_date edu_date   first_survey
 #>     <int64> <chr> <chr>     <chr> <date>     <date>      <date>     <date>      
-#> 1   1000002 No    AnnualIn… High… 2022-09-30 2018-03-31  2022-02-28 2018-12-20  
-#> 2   1000003 No    AnnualIn… High… 2021-03-19 2018-12-12  2019-08-15 2019-10-07  
-#> 3   1000004 No    AnnualIn… High… 2017-08-20 2019-08-03  2019-05-02 2019-08-09  
-#> 4   1000005 No    NA        High… 2020-01-26 NA          2020-04-15 2020-10-06  
-#> 5   1000007 No    NA        PMI_… 2020-02-21 NA          2020-03-22 2019-10-15  
-#> 6   1000010 No    NA        High… 2017-11-21 NA          2022-05-31 2020-03-04  
+#> 1   1000002 No    AnnualIn… High… 2022-09-30 2018-03-31  2021-12-25 2020-03-28  
+#> 2   1000003 No    AnnualIn… High… 2021-03-19 2018-12-12  2019-10-21 2019-12-19  
+#> 3   1000004 No    AnnualIn… High… 2017-08-20 2019-08-03  2018-11-07 2017-11-20  
+#> 4   1000005 No    NA        High… 2020-01-26 NA          2020-10-04 2020-10-06  
+#> 5   1000007 No    NA        PMI_… 2020-02-21 NA          2017-05-08 2020-08-18  
+#> 6   1000010 No    NA        NA    2017-11-21 NA          NA         2017-06-21  
 #> # ℹ 3 more variables: year_before_survey <date>,
 #> #   observation_period_start_date <date>, observation_period_end_date <date>
 ```

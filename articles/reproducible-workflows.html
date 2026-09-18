@@ -106,11 +106,11 @@ analysis code against a stable dataset.</p>
 <span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/tbl.html" class="external-link">tbl</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"condition_occurrence"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">condition_concept_id</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">201826</span>, <span class="fl">4193704</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span>people <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/n_distinct.html" class="external-link">n_distinct</a></span><span class="op">(</span><span class="va">person_id</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Source:   SQL [?? x 1]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpdO180i/file1c8575ed7804.duckdb]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A query:  ?? x 1</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.5 [unknown@Linux 6.17.0-1022-azure:R 4.6.1//tmp/RtmpU0BPwD/file1cb27bc9f4e7.duckdb]</span></span></span>
 <span><span class="co">#&gt;    people</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int64&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     345</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     353</span></span></code></pre></div>
 <p><code><a href="../reference/build_mock_db.html">build_mock_db()</a></code> does nothing if the file already exists;
 pass <code>overwrite = TRUE</code> to rebuild. The default location is
 the project directory ([<code><a href="../reference/default_mock_db_path.html">default_mock_db_path()</a></code>]); override
@@ -173,11 +173,11 @@ call runs against real data.</p>
 <span>                      prevalence <span class="op">=</span> <span class="fl">0.4</span>, values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">11</span><span class="op">)</span>, seed <span class="op">=</span> <span class="fl">3</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">high_a1c_cohort</span><span class="op">(</span>con <span class="op">=</span> <span class="va">con</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">tally</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Source:   SQL [?? x 1]</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.2 [unknown@Linux 6.17.0-1018-azure:R 4.6.0//tmp/RtmpdO180i/file1c8575ed7804.duckdb]</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A query:  ?? x 1</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># Database: DuckDB 1.5.5 [unknown@Linux 6.17.0-1022-azure:R 4.6.1//tmp/RtmpU0BPwD/file1cb27bc9f4e7.duckdb]</span></span></span>
 <span><span class="co">#&gt;         n</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int64&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     359</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     368</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="test-analysis-code-without-the-workbench">Test analysis code without the Workbench<a class="anchor" aria-label="anchor" href="#test-analysis-code-without-the-workbench"></a>
@@ -238,7 +238,7 @@ database in CI.</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
