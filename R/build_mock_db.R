@@ -143,11 +143,14 @@ populate_person <- function(con, person_ids) {
   n <- length(person_ids)
   spec <- table_spec("person")
   gender <- sample(c(45878463L, 45880669L), n, replace = TRUE)
+  # month_of_birth, day_of_birth and birth_datetime are deliberately left NULL:
+  # All of Us suppresses all three in the controlled tier (see the "Field
+  # (Column) Suppressions" tab of the data dictionary). Populating them here
+  # would let code that derives an age from them work locally and return
+  # nothing on the Workbench. Birth date comes from cb_search_person$dob.
   vals <- list(
     person_id = person_ids,
     year_of_birth = sample(1930:2005, n, replace = TRUE),
-    month_of_birth = sample(1:12, n, replace = TRUE),
-    day_of_birth = sample(1:28, n, replace = TRUE),
     gender_concept_id = gender,
     sex_at_birth_concept_id = gender,
     race_concept_id = sample(c(8516L, 8527L, 8515L), n, replace = TRUE),
@@ -210,12 +213,14 @@ populate_domain <- function(con, table, id_col, concept_col, start_col, end_col,
   start <- day0 + sample.int(as.integer(as.Date("2023-01-01") - day0), N, replace = TRUE)
 
   spec <- table_spec(table)
+  cids <- resample(pool$concept_id, N)
   vals <- c(list(), extra)
   vals[["person_id"]] <- pid
   vals[[id_col]] <- ids
-  vals[[concept_col]] <- resample(pool$concept_id, N)
+  vals[[concept_col]] <- cids
   vals[[start_col]] <- start
   if (!is.null(end_col)) vals[[end_col]] <- start + sample(0:30, N, replace = TRUE)
+  vals <- add_source_columns(vals, spec, concept_col, cids)
   DBI::dbAppendTable(con, table, assemble_rows(spec, N, vals))
 
   ext <- paste0(table, "_ext")
@@ -243,6 +248,7 @@ populate_measurement <- function(con, person_ids, id_start) {
   spec <- table_spec("measurement")
   vals <- list(person_id = pid, measurement_id = ids, measurement_concept_id = cids,
                measurement_date = mdate, value_as_number = value, unit_concept_id = 8554L)
+  vals <- add_source_columns(vals, spec, "measurement_concept_id", cids)
   DBI::dbAppendTable(con, "measurement", assemble_rows(spec, N, vals))
   spec_ext <- table_spec("measurement_ext")
   src <- ifelse(stats::runif(N) < 0.9, paste("EHR site", sample(100:120, N, replace = TRUE)), "PPI/PM")
@@ -261,9 +267,11 @@ populate_clinical_observation <- function(con, person_ids, id_start) {
   day0 <- as.Date("2008-01-01")
   odate <- day0 + sample.int(as.integer(as.Date("2023-01-01") - day0), N, replace = TRUE)
   spec <- table_spec("observation")
+  ocids <- sample(c(4275495L, 4058243L), N, replace = TRUE)
   vals <- list(person_id = pid, observation_id = ids,
-               observation_concept_id = sample(c(4275495L, 4058243L), N, replace = TRUE),
+               observation_concept_id = ocids,
                observation_date = odate)
+  vals <- add_source_columns(vals, spec, "observation_concept_id", ocids)
   DBI::dbAppendTable(con, "observation", assemble_rows(spec, N, vals))
   spec_ext <- table_spec("observation_ext")
   src <- paste("EHR site", sample(100:120, N, replace = TRUE))
@@ -367,14 +375,45 @@ populate_observation_period <- function(con, person_ids) {
 populate_cb_search_person <- function(con, person_ids) {
   spec <- table_spec("cb_search_person")
   n <- length(person_ids)
+
+  # Read back the person table rather than re-drawing, so the two agree. Code
+  # that filters cb_search_person and then joins person must not see one sex at
+  # birth here and another there.
+  ppl <- DBI::dbGetQuery(
+    con, "SELECT person_id, year_of_birth, sex_at_birth_concept_id FROM person"
+  )
+  ppl <- ppl[match(person_ids, ppl$person_id), ]
+  sex <- ifelse(ppl$sex_at_birth_concept_id == 45880669L, "Male", "Female")
+
+  # `dob` is the only usable birth date in the controlled tier, since
+  # person.birth_datetime is suppressed. All of Us generalizes it to the year
+  # of birth, defaulting the rest to mid-year, so the mock does the same.
+  dob <- as.Date(paste0(ppl$year_of_birth, "-06-15"))
+  cdr_date <- as.Date("2023-07-01")
+
   vals <- list(
     person_id = person_ids,
-    gender = sample(c("Male", "Female"), n, replace = TRUE),
-    sex_at_birth = sample(c("Male", "Female"), n, replace = TRUE),
+    dob = dob,
+    gender = sex,
+    sex_at_birth = sex,
     race = sample(c("White", "Black or African American", "Asian"), n, replace = TRUE),
     ethnicity = sample(c("Hispanic or Latino", "Not Hispanic or Latino"), n, replace = TRUE),
     age_at_consent = sample(18:90, n, replace = TRUE),
-    has_ehr_data = sample(c(0L, 1L), n, replace = TRUE, prob = c(0.2, 0.8))
+    age_at_cdr = as.integer(floor(as.numeric(cdr_date - dob) / 365.25)),
+    state_of_residence = sample(datasets::state.name, n, replace = TRUE),
+    is_deceased = sample(c(0L, 1L), n, replace = TRUE, prob = c(0.97, 0.03)),
+    has_ehr_data = sample(c(0L, 1L), n, replace = TRUE, prob = c(0.2, 0.8)),
+    has_ppi_survey_data = sample(c(0L, 1L), n, replace = TRUE, prob = c(0.1, 0.9)),
+    has_physical_measurement_data = sample(c(0L, 1L), n, replace = TRUE, prob = c(0.3, 0.7))
   )
+
+  # the availability flags are all the same shape; fill whichever this CDR
+  # version's dictionary actually lists
+  flags <- grep("^has_(fitbit|whole_genome|array|lr_whole_genome|structural)",
+                spec$col, value = TRUE)
+  for (f in flags) {
+    vals[[f]] <- sample(c(0L, 1L), n, replace = TRUE, prob = c(0.8, 0.2))
+  }
+
   DBI::dbAppendTable(con, "cb_search_person", assemble_rows(spec, n, vals))
 }

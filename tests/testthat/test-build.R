@@ -45,3 +45,72 @@ test_that("build is deterministic for a fixed seed", {
     DBI::dbGetQuery(c2, "SELECT count(*) n FROM condition_occurrence")$n
   )
 })
+
+test_that("cb_search_person carries a usable date of birth", {
+  # dob is the only usable birth date in the controlled tier, because
+  # person.birth_datetime is suppressed. Leaving it NULL meant any code that
+  # aged a cohort returned zero rows locally while working on the Workbench.
+  con <- local_mock_con(n_persons = 50L)
+  res <- DBI::dbGetQuery(con, "SELECT dob, age_at_cdr FROM cb_search_person")
+  expect_false(anyNA(res$dob))
+  expect_s3_class(res$dob, "Date")
+  expect_false(anyNA(res$age_at_cdr))
+})
+
+test_that("cb_search_person has no entirely empty columns", {
+  con <- local_mock_con(n_persons = 50L)
+  cols <- DBI::dbListFields(con, "cb_search_person")
+  counts <- DBI::dbGetQuery(con, sprintf(
+    "SELECT %s FROM cb_search_person",
+    paste(sprintf('count("%s") AS "%s"', cols, cols), collapse = ", ")
+  ))
+  empty <- names(counts)[as.numeric(counts[1, ]) == 0]
+  expect_equal(empty, character())
+})
+
+test_that("person month and day of birth are suppressed, as in the controlled tier", {
+  # All of Us nulls month_of_birth, day_of_birth and birth_datetime. The mock
+  # matches, so code reading them fails here rather than on the Workbench.
+  con <- local_mock_con(n_persons = 50L)
+  res <- DBI::dbGetQuery(
+    con, "SELECT month_of_birth, day_of_birth, birth_datetime FROM person"
+  )
+  expect_true(all(is.na(res$month_of_birth)))
+  expect_true(all(is.na(res$day_of_birth)))
+  expect_true(all(is.na(res$birth_datetime)))
+})
+
+test_that("sex at birth agrees between person and cb_search_person", {
+  con <- local_mock_con(n_persons = 100L)
+  n <- DBI::dbGetQuery(con, "
+    SELECT count(*) AS n FROM person p
+    JOIN cb_search_person c USING (person_id)
+    WHERE (p.sex_at_birth_concept_id = 45880669 AND c.sex_at_birth <> 'Male')
+       OR (p.sex_at_birth_concept_id <> 45880669 AND c.sex_at_birth = 'Male')
+  ")$n
+  expect_equal(as.numeric(n), 0)
+})
+
+test_that("clinical rows carry source concepts", {
+  # All of Us row suppression is keyed on *_source_concept_id, so an all-NULL
+  # source column makes any suppression analysis silently empty locally
+  con <- local_mock_con(n_persons = 100L)
+  for (tb in c("condition_occurrence", "procedure_occurrence", "measurement")) {
+    col <- sub("_occurrence$", "", tb)
+    src <- sprintf("%s_source_concept_id", col)
+    res <- DBI::dbGetQuery(con, sprintf(
+      "SELECT count(*) AS n, count(%s) AS n_src FROM %s", src, tb
+    ))
+    expect_gt(res$n, 0)
+    expect_equal(res$n_src, res$n, info = tb)
+  }
+})
+
+test_that("some source concepts are unmapped, as in the real CDR", {
+  con <- local_mock_con(n_persons = 200L)
+  n0 <- DBI::dbGetQuery(con, "
+    SELECT count(*) AS n FROM condition_occurrence
+    WHERE condition_source_concept_id = 0
+  ")$n
+  expect_gt(as.numeric(n0), 0)
+})

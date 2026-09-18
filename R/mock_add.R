@@ -119,8 +119,32 @@ mock_add_occurrences <- function(con, domain, person_id, concept_id, date,
     cli::cli_abort("{.arg domain} must be one of {.val {names(dm)}}.")
   }
   cn <- dm[[domain]]
-  n <- length(person_id)
-  if (n == 0) return(invisible(integer(0)))
+
+  # Recycle to the longest argument, not to length(person_id). The old
+  # behaviour took its length from person_id alone, so a scalar person_id with
+  # a vector of dates silently inserted a single row -- the rest of the dates
+  # were dropped without a warning, and a test written that way quietly
+  # asserted almost nothing.
+  lens <- c(
+    person_id = length(person_id),
+    concept_id = length(concept_id),
+    date = length(date)
+  )
+  if (!is.null(end_date)) lens["end_date"] <- length(end_date)
+  if (!is.null(value)) lens["value"] <- length(value)
+
+  if (any(lens == 0)) return(invisible(integer(0)))
+  n <- max(lens)
+  bad <- lens[lens != 1L & lens != n]
+  if (length(bad) > 0) {
+    cli::cli_abort(c(
+      "Can't recycle {.arg {names(bad)}} to length {n}.",
+      "i" = "Each argument must have length 1 or {n}.",
+      "x" = "{.arg {names(bad)}} {?has|have} length {unname(bad)}."
+    ))
+  }
+
+  person_id <- rep_len(person_id, n)
   concept_id <- rep_len(as.integer(concept_id), n)
   date <- rep_len(as.Date(date), n)
   end <- if (is.null(end_date)) date else rep_len(as.Date(end_date), n)
@@ -136,6 +160,7 @@ mock_add_occurrences <- function(con, domain, person_id, concept_id, date,
   if (!is.null(value) && "value_as_number" %in% spec$col) {
     vals[["value_as_number"]] <- rep_len(as.numeric(value), n)
   }
+  vals <- add_source_columns(vals, spec, cn$concept, concept_id)
   DBI::dbAppendTable(con, cn$table, assemble_rows(spec, n, vals))
 
   ext <- paste0(cn$table, "_ext")

@@ -29,6 +29,10 @@ duckdb_type <- function(col) {
   if (col %in% c("year_of_birth", "month_of_birth", "day_of_birth")) return("INTEGER")
   if (col %in% c("age_at_consent", "age_at_cdr", "survey_version_number", "refills", "days_supply", "quantity")) return("INTEGER")
   if (col %in% c("value_as_number", "range_low", "range_high")) return("DOUBLE")
+  # cb_search_person$dob is a DATE in the CDR but the name matches no pattern.
+  # Left as VARCHAR it forced an as.Date() cast that is a no-op on BigQuery,
+  # so local code needed a line the Workbench did not.
+  if (col == "dob") return("DATE")
   if (grepl("_datetime$", col)) return("TIMESTAMP")
   if (grepl("_date$", col)) return("DATE")
   if (grepl("^has_|^is_", col)) return("INTEGER") # boolean-ish flags; vignette uses == 1
@@ -142,4 +146,38 @@ parse_choice_codes <- function(choices) {
   pieces <- strsplit(choices, "\\|")[[1]]
   codes <- vapply(pieces, function(p) trimws(strsplit(p, ",")[[1]][1]), character(1))
   unname(codes[nzchar(codes)])
+}
+
+# Source concept ids for synthetic clinical rows.
+#
+# All of Us records both a standard `*_concept_id` and the contributing site's
+# own `*_source_concept_id`, and several important properties of the real CDR
+# are visible only in the source column -- most notably the controlled tier's
+# row suppression, which is keyed on source concepts rather than standard ones.
+# Leaving the column NULL made any such analysis silently return nothing
+# locally while working on the Workbench.
+#
+# The synthetic mapping is deliberately simple: most rows carry the standard
+# concept as their source, and a minority carry 0, All of Us's marker for a
+# site code that did not map. That is enough to exercise code that groups or
+# filters on the source column; it is not a model of real source vocabularies.
+mock_source_concepts <- function(concept_id, unmapped_frac = 0.12) {
+  ifelse(stats::runif(length(concept_id)) < unmapped_frac, 0L, as.integer(concept_id))
+}
+
+mock_source_values <- function(source_concept_id) {
+  ifelse(source_concept_id == 0L, NA_character_, paste0("SRC", source_concept_id))
+}
+
+# Add source columns to a values list, when the table has them.
+add_source_columns <- function(vals, spec, concept_col, concept_id,
+                               unmapped_frac = 0.12) {
+  src_concept_col <- sub("_concept_id$", "_source_concept_id", concept_col)
+  src_value_col <- sub("_concept_id$", "_source_value", concept_col)
+  if (src_concept_col %in% spec$col) {
+    src <- mock_source_concepts(concept_id, unmapped_frac)
+    vals[[src_concept_col]] <- src
+    if (src_value_col %in% spec$col) vals[[src_value_col]] <- mock_source_values(src)
+  }
+  vals
 }

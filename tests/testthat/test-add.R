@@ -64,3 +64,53 @@ test_that("mock_add_occurrences errors on an unknown domain", {
     "domain"
   )
 })
+
+test_that("mock_add_occurrences recycles to the longest argument", {
+  # it used to take its length from person_id alone, so a scalar person_id with
+  # a vector of dates silently inserted one row and dropped the rest
+  con <- local_mock_con(n_persons = 20L)
+  pid <- mock_person_ids(con)[1]
+  mock_add_concepts(con, concept_id = 9000001L, concept_name = "recycle test",
+                    domain_id = "Condition")
+  dates <- as.Date(c("2018-01-01", "2018-02-01", "2018-03-01", "2018-04-01"))
+
+  ids <- mock_add_occurrences(con, domain = "condition", person_id = pid,
+                              concept_id = 9000001L, date = dates, source = "ehr")
+
+  expect_length(ids, length(dates))
+  res <- DBI::dbGetQuery(con, "
+    SELECT condition_start_date FROM condition_occurrence
+    WHERE condition_concept_id = 9000001
+  ")
+  expect_setequal(as.Date(res$condition_start_date), dates)
+})
+
+test_that("mock_add_occurrences errors on lengths that cannot recycle", {
+  con <- local_mock_con(n_persons = 20L)
+  pids <- mock_person_ids(con)[1:3]
+  mock_add_concepts(con, concept_id = 9000002L, concept_name = "bad recycle",
+                    domain_id = "Condition")
+  expect_error(
+    mock_add_occurrences(con, domain = "condition", person_id = pids,
+                         concept_id = 9000002L,
+                         date = as.Date(c("2018-01-01", "2018-02-01"))),
+    "recycle"
+  )
+})
+
+test_that("mock_add_occurrences writes source concepts", {
+  con <- local_mock_con(n_persons = 20L)
+  pid <- mock_person_ids(con)[1]
+  mock_add_concepts(con, concept_id = 9000003L, concept_name = "src test",
+                    domain_id = "Condition")
+  mock_add_occurrences(con, domain = "condition", person_id = rep(pid, 20),
+                       concept_id = 9000003L,
+                       date = as.Date("2019-01-01"), source = "ehr")
+  res <- DBI::dbGetQuery(con, "
+    SELECT condition_source_concept_id FROM condition_occurrence
+    WHERE condition_concept_id = 9000003
+  ")
+  expect_equal(nrow(res), 20)
+  expect_false(anyNA(res$condition_source_concept_id))
+  expect_true(all(res$condition_source_concept_id %in% c(0, 9000003)))
+})
